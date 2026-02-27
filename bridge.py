@@ -8,7 +8,7 @@ from fastapi import WebSocket
 
 from config import OPENAI_API_KEY, OPENAI_REALTIME_URL
 from prompt import SYSTEM_PROMPT
-from database import save_conversation
+from db import save_conversation
 import rag
 
 logger = logging.getLogger(__name__)
