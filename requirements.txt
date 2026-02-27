@@ -7,3 +7,4 @@ supabase
 openai
 faiss-cpu
 tiktoken
+httpx

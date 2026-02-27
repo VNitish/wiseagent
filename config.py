@@ -11,3 +11,5 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 OPENAI_REALTIME_URL = "wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview"
+
+OPENGRAPH_API_KEY = os.getenv("OPENGRAPH_API_KEY")
