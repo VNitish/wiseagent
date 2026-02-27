@@ -37,11 +37,14 @@ async def call(request: Request):
 
 @app.post("/incoming-call")
 async def incoming_call(request: Request):
+    form = await request.form()
+    caller = form.get("From", "unknown")
+    call_sid = form.get("CallSid", "unknown")
     host = request.headers["host"]
     twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Connect>
-        <Stream url="wss://{host}/media-stream"/>
+        <Stream url="wss://{host}/media-stream?caller={caller}&amp;call_sid={call_sid}"/>
     </Connect>
 </Response>"""
     return HTMLResponse(content=twiml, media_type="application/xml")
