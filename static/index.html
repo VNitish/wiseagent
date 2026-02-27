@@ -2,94 +2,252 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>WiseAgent</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f0f4f8;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0d1117;
+      min-height: 100vh;
       display: flex;
-      justify-content: center;
       align-items: center;
-      height: 100vh;
+      justify-content: center;
+      padding: 24px;
     }
 
+    .layout {
+      display: flex;
+      gap: 20px;
+      width: 100%;
+      max-width: 860px;
+      align-items: flex-start;
+    }
+
+    /* ── Cards ── */
     .card {
-      background: white;
+      background: #161b22;
+      border: 1px solid #30363d;
       border-radius: 16px;
-      padding: 48px 40px;
-      width: 360px;
-      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+      padding: 36px 32px;
+    }
+
+    .card-call { flex: 0 0 320px; }
+    .card-ingest { flex: 1; }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .card-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .icon-call { background: rgba(0, 185, 255, 0.12); }
+    .icon-ingest { background: rgba(35, 196, 124, 0.12); }
+
+    .card h2 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #e6edf3;
+      letter-spacing: -0.01em;
+    }
+
+    .card-subtitle {
+      font-size: 13px;
+      color: #6e7681;
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
+    /* ── Inputs ── */
+    input, textarea {
+      width: 100%;
+      padding: 11px 14px;
+      font-size: 14px;
+      font-family: inherit;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      color: #e6edf3;
+      outline: none;
+      transition: border-color 0.15s;
+      margin-bottom: 12px;
+    }
+
+    input::placeholder, textarea::placeholder { color: #484f58; }
+    input:focus, textarea:focus { border-color: #388bfd; }
+
+    /* ── Buttons ── */
+    .btn {
+      width: 100%;
+      padding: 11px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      letter-spacing: 0.01em;
+    }
+
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+    .btn-call { background: #1f6feb; color: #fff; }
+    .btn-call:hover:not(:disabled) { background: #388bfd; }
+
+    .btn-ingest { background: #238636; color: #fff; }
+    .btn-ingest:hover:not(:disabled) { background: #2ea043; }
+
+    /* ── Status (call) ── */
+    #call-status {
+      margin-top: 14px;
+      font-size: 13px;
+      color: #8b949e;
+      min-height: 18px;
       text-align: center;
     }
 
-    .logo { font-size: 32px; margin-bottom: 12px; }
-
-    h1 { font-size: 22px; color: #1a1a2e; margin-bottom: 6px; }
-
-    p { font-size: 14px; color: #888; margin-bottom: 32px; }
-
-    input {
-      width: 100%;
-      padding: 14px 16px;
-      font-size: 16px;
-      border: 1.5px solid #e0e0e0;
-      border-radius: 10px;
-      outline: none;
-      transition: border-color 0.2s;
+    /* ── Progress bar ── */
+    .progress-wrap {
+      height: 4px;
+      background: #21262d;
+      border-radius: 2px;
       margin-bottom: 16px;
+      overflow: hidden;
+      display: none;
     }
 
-    input:focus { border-color: #00b9ff; }
+    .progress-wrap.visible { display: block; }
 
-    button {
-      width: 100%;
-      padding: 14px;
-      font-size: 16px;
-      font-weight: 600;
-      background: #00b9ff;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: background 0.2s;
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: #238636;
+      border-radius: 2px;
+      transition: width 0.3s ease;
     }
 
-    button:hover { background: #009edf; }
-    button:disabled { background: #b0dff5; cursor: not-allowed; }
+    .progress-bar.error { background: #da3633; }
 
-    #status {
-      margin-top: 20px;
-      font-size: 14px;
-      color: #555;
-      min-height: 20px;
+    /* ── Log feed ── */
+    .log-feed {
+      max-height: 240px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .log-feed::-webkit-scrollbar { width: 4px; }
+    .log-feed::-webkit-scrollbar-track { background: transparent; }
+    .log-feed::-webkit-scrollbar-thumb { background: #30363d; border-radius: 2px; }
+
+    .log-entry {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 13px;
+      color: #8b949e;
+      line-height: 1.5;
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+    .log-entry.success { color: #3fb950; }
+    .log-entry.error-entry { color: #f85149; }
+
+    .log-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #30363d;
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+
+    .log-entry.success .log-dot { background: #3fb950; }
+    .log-entry.error-entry .log-dot { background: #f85149; }
+    .log-entry.active .log-dot {
+      background: #388bfd;
+      box-shadow: 0 0 0 3px rgba(56, 139, 253, 0.2);
+    }
+
+    .divider {
+      width: 1px;
+      background: #21262d;
+      align-self: stretch;
+      flex-shrink: 0;
+      margin: 0 2px;
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="logo">🦉</div>
-    <h1>WiseAgent</h1>
-    <p>Enter your phone number and we'll call you.</p>
-    <input id="phone" type="tel" placeholder="+91XXXXXXXXXX" />
-    <button id="btn" onclick="makeCall()">Call Me</button>
-    <div id="status"></div>
+  <div class="layout">
+
+    <!-- ── Call Panel ── -->
+    <div class="card card-call">
+      <div class="card-header">
+        <div class="card-icon icon-call">🦉</div>
+        <h2>WiseAgent</h2>
+      </div>
+      <p class="card-subtitle">Enter your number and Aria will call you.</p>
+
+      <input id="phone" type="tel" placeholder="+91XXXXXXXXXX" />
+      <button class="btn btn-call" id="call-btn" onclick="makeCall()">Call Me</button>
+      <div id="call-status"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ── Ingestion Panel ── -->
+    <div class="card card-ingest">
+      <div class="card-header">
+        <div class="card-icon icon-ingest">📚</div>
+        <h2>Knowledge Base</h2>
+      </div>
+      <p class="card-subtitle">Paste a Wise Help article URL to ingest it into Aria's knowledge.</p>
+
+      <input
+        id="ingest-url"
+        type="url"
+        placeholder="https://wise.com/help/articles/..."
+      />
+      <button class="btn btn-ingest" id="ingest-btn" onclick="startIngestion()">Start Ingestion</button>
+
+      <div class="progress-wrap" id="progress-wrap">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+
+      <div class="log-feed" id="log-feed"></div>
+    </div>
+
   </div>
 
   <script>
+    // ── Call ───────────────────────────────────────────────────────────────────
     async function makeCall() {
       const phone = document.getElementById("phone").value.trim();
-      const status = document.getElementById("status");
-      const btn = document.getElementById("btn");
+      const status = document.getElementById("call-status");
+      const btn = document.getElementById("call-btn");
 
-      if (!phone) {
-        status.innerText = "Please enter a phone number.";
-        return;
-      }
+      if (!phone) { status.innerText = "Enter a phone number first."; return; }
 
       btn.disabled = true;
-      status.innerText = "Initiating call...";
+      status.innerText = "Initiating call…";
 
       try {
         const res = await fetch("/call", {
@@ -98,12 +256,84 @@
           body: JSON.stringify({ to: phone }),
         });
         const data = await res.json();
-        status.innerText = data.message;
+        status.innerText = data.message || data.error;
       } catch {
-        status.innerText = "Something went wrong. Please try again.";
+        status.innerText = "Something went wrong. Try again.";
       } finally {
         btn.disabled = false;
       }
+    }
+
+    // ── Ingestion ──────────────────────────────────────────────────────────────
+    async function startIngestion() {
+      const url = document.getElementById("ingest-url").value.trim();
+      const btn = document.getElementById("ingest-btn");
+      const feed = document.getElementById("log-feed");
+      const bar = document.getElementById("progress-bar");
+      const wrap = document.getElementById("progress-wrap");
+
+      if (!url) { addLog("Enter a URL first.", 0, true); return; }
+
+      btn.disabled = true;
+      feed.innerHTML = "";
+      bar.style.width = "0%";
+      bar.className = "progress-bar";
+      wrap.classList.add("visible");
+
+      try {
+        const response = await fetch("/ingest", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url }),
+        });
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop();
+
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            try {
+              const data = JSON.parse(line.slice(6));
+              addLog(data.message, data.progress, data.error);
+              bar.style.width = data.progress + "%";
+              if (data.error) bar.className = "progress-bar error";
+            } catch (_) {}
+          }
+        }
+      } catch (e) {
+        addLog("Connection error: " + e.message, 0, true);
+        bar.className = "progress-bar error";
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function addLog(message, progress, isError) {
+      const feed = document.getElementById("log-feed");
+
+      // Mark previous active entry as done
+      const prev = feed.querySelector(".log-entry.active");
+      if (prev) {
+        prev.classList.remove("active");
+        if (!prev.classList.contains("error-entry")) prev.classList.add("success");
+      }
+
+      const entry = document.createElement("div");
+      const isDone = progress >= 100;
+      const cls = isError ? "error-entry" : isDone ? "success" : "active";
+      entry.className = `log-entry ${cls}`;
+      entry.innerHTML = `<div class="log-dot"></div><span>${message}</span>`;
+      feed.appendChild(entry);
+      feed.scrollTop = feed.scrollHeight;
     }
   </script>
 </body>
