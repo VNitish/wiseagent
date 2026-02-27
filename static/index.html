@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>WiseAgent</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f0f4f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 48px 40px;
+      width: 360px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+      text-align: center;
+    }
+
+    .logo { font-size: 32px; margin-bottom: 12px; }
+
+    h1 { font-size: 22px; color: #1a1a2e; margin-bottom: 6px; }
+
+    p { font-size: 14px; color: #888; margin-bottom: 32px; }
+
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 16px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 10px;
+      outline: none;
+      transition: border-color 0.2s;
+      margin-bottom: 16px;
+    }
+
+    input:focus { border-color: #00b9ff; }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: 600;
+      background: #00b9ff;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover { background: #009edf; }
+    button:disabled { background: #b0dff5; cursor: not-allowed; }
+
+    #status {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #555;
+      min-height: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">🦉</div>
+    <h1>WiseAgent</h1>
+    <p>Enter your phone number and we'll call you.</p>
+    <input id="phone" type="tel" placeholder="+91XXXXXXXXXX" />
+    <button id="btn" onclick="makeCall()">Call Me</button>
+    <div id="status"></div>
+  </div>
+
+  <script>
+    async function makeCall() {
+      const phone = document.getElementById("phone").value.trim();
+      const status = document.getElementById("status");
+      const btn = document.getElementById("btn");
+
+      if (!phone) {
+        status.innerText = "Please enter a phone number.";
+        return;
+      }
+
+      btn.disabled = true;
+      status.innerText = "Initiating call...";
+
+      try {
+        const res = await fetch("/call", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ to: phone }),
+        });
+        const data = await res.json();
+        status.innerText = data.message;
+      } catch {
+        status.innerText = "Something went wrong. Please try again.";
+      } finally {
+        btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>
