@@ -46,14 +46,6 @@ async def run(twilio_ws: WebSocket):
                     if data["event"] == "start":
                         stream_sid = data["start"]["streamSid"]
                         logger.info(f"Stream started: {stream_sid}")
-                        await oai_ws.send(json.dumps({
-                            "type": "conversation.item.create",
-                            "item": {
-                                "type": "message",
-                                "role": "user",
-                                "content": [{"type": "input_text", "text": "Hello"}],
-                            },
-                        }))
                         await oai_ws.send(json.dumps({"type": "response.create"}))
                     elif data["event"] == "media":
                         await oai_ws.send(json.dumps({
