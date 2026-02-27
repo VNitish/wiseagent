@@ -4,3 +4,6 @@ websockets
 python-dotenv
 twilio
 supabase
+openai
+faiss-cpu
+tiktoken

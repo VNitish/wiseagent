@@ -9,6 +9,7 @@ from fastapi import WebSocket
 from config import OPENAI_API_KEY, OPENAI_REALTIME_URL
 from prompt import SYSTEM_PROMPT
 from database import save_conversation
+import rag
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,7 @@ SESSION_CONFIG = {
         "type": "server_vad",
         "silence_duration_ms": 300,
         "prefix_padding_ms": 100,
+        "create_response": False,  # We manually trigger response after RAG gate
     },
     "input_audio_format": "g711_ulaw",
     "output_audio_format": "g711_ulaw",
@@ -55,6 +57,7 @@ async def run(twilio_ws: WebSocket):
                     if data["event"] == "start":
                         stream_sid = data["start"]["streamSid"]
                         logger.info(f"Stream started: {stream_sid}")
+                        # Trigger greeting — no context needed
                         await oai_ws.send(json.dumps({"type": "response.create"}))
                     elif data["event"] == "media":
                         await oai_ws.send(json.dumps({
@@ -81,11 +84,34 @@ async def run(twilio_ws: WebSocket):
                             })
 
                         elif event_type == "conversation.item.input_audio_transcription.completed":
+                            user_text = data.get("transcript", "")
                             transcript.append({
                                 "role": "user",
-                                "text": data.get("transcript", ""),
+                                "text": user_text,
                                 "timestamp": datetime.now(timezone.utc).isoformat(),
                             })
+
+                            # RAG gate: retrieve context or let LLM decide
+                            context = await rag.retrieve(user_text)
+                            if context:
+                                instructions = (
+                                    f"Answer the caller using ONLY the following context:\n\n"
+                                    f"{context}\n\n"
+                                    f"If the context doesn't fully answer their question, say it's outside "
+                                    f"what you can help with and offer to connect them to a human agent."
+                                )
+                            else:
+                                instructions = (
+                                    "If this is a greeting or small talk, respond warmly and naturally. "
+                                    "If it is a question — even one that seems Wise-related — it is outside "
+                                    "your knowledge base. Deflect: tell the caller you'll connect them to a "
+                                    "human agent who can help."
+                                )
+
+                            await oai_ws.send(json.dumps({
+                                "type": "response.create",
+                                "response": {"instructions": instructions},
+                            }))
 
                         elif event_type == "response.audio.delta" and stream_sid:
                             await twilio_ws.send_json({
