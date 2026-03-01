@@ -40,10 +40,9 @@ SESSION_CONFIG = {
 }
 
 _FILLER_INSTRUCTION = (
-    "BARGE-IN: the caller interrupted you. "
-    "Say EXACTLY one of these — pick one, say nothing else: "
-    "'Sure.', 'Of course.', 'Go ahead.', 'Yes?', 'Okay.' "
-    "Do NOT continue your previous response. Do NOT add any other words."
+    "Say ONE single word only — nothing else — choose one: "
+    "'Sure.' or 'Yes?' or 'Okay.' "
+    "ONE word. No sentences. No continuation."
 )
 
 
@@ -81,9 +80,19 @@ async def run(twilio_ws: WebSocket):
             logger.info("Connected to OpenAI Realtime")
             await oai_ws.send(json.dumps({"type": "session.update", "session": SESSION_CONFIG}))
 
-            # Fire greeting immediately — overlaps OpenAI setup with audio generation.
+            # Fire greeting immediately with a pinned short phrase so the model
+            # doesn't have to interpret the system prompt — cuts first-token latency.
             state["response_active"] = True
-            await oai_ws.send(json.dumps({"type": "response.create"}))
+            await oai_ws.send(json.dumps({
+                "type": "response.create",
+                "response": {
+                    "instructions": (
+                        "Say exactly this greeting, nothing more: "
+                        "'Hi, you've reached Wise support — how can I help you today?'"
+                    ),
+                    "max_output_tokens": 30,
+                },
+            }))
             _audio_buffer: list[str] = []
 
             async def _send_response(instructions: str | None = None) -> None:
@@ -152,6 +161,11 @@ async def run(twilio_ws: WebSocket):
                             logger.error(f"OpenAI error: {data}")
                             if data.get("error", {}).get("code") != "response_cancel_not_active":
                                 state["response_active"] = False
+                                # If the filler was rejected, barge_in_active would
+                                # stay True forever — response.done never fires.
+                                if state["barge_in_active"]:
+                                    state["barge_in_active"] = False
+                                    state["pending_instructions"] = None
 
                         # ── Track assistant item ID (for conversation.item.truncate) ─
                         elif event_type == "conversation.item.created":
@@ -160,10 +174,12 @@ async def run(twilio_ws: WebSocket):
                                 state["last_assistant_item_id"] = item.get("id")
 
                         # ── Old response stopped (cancel confirmed) ─────────────
-                        # Kept separate from response.done — barge_in_active must
-                        # only flip on response.done (when the FILLER finishes).
+                        # Don't clear response_active if the filler is already
+                        # in-flight (barge_in_active=True means we already sent
+                        # a new response.create for the filler).
                         elif event_type == "response.cancelled":
-                            state["response_active"] = False
+                            if not state["barge_in_active"]:
+                                state["response_active"] = False
                             state["draining"] = False
 
                         # ── Response generation done ────────────────────────────
@@ -253,11 +269,28 @@ async def run(twilio_ws: WebSocket):
                                         }))
                                         logger.info(f"Truncated at {max(0, elapsed_ms)}ms")
 
-                                    # 4. Play filler immediately
+                                    # 4. Inject a synthetic user turn to close the
+                                    #    interrupted assistant turn in the model's context.
+                                    #    Without this the model resumes the previous response
+                                    #    instead of following the filler instruction.
+                                    await oai_ws.send(json.dumps({
+                                        "type": "conversation.item.create",
+                                        "item": {
+                                            "type": "message",
+                                            "role": "user",
+                                            "content": [{"type": "input_text", "text": "okay"}],
+                                        },
+                                    }))
+
+                                    # 5. Filler — model now responds to "okay", not the
+                                    #    cancelled response. Hard cap ensures one word.
                                     state["response_active"] = True
                                     await oai_ws.send(json.dumps({
                                         "type": "response.create",
-                                        "response": {"instructions": _FILLER_INSTRUCTION},
+                                        "response": {
+                                            "instructions": _FILLER_INSTRUCTION,
+                                            "max_output_tokens": 10,
+                                        },
                                     }))
                                     state["barge_in_task"] = None
 
