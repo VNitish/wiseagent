@@ -13,6 +13,10 @@ import rag
 
 logger = logging.getLogger(__name__)
 
+_CYAN  = "\033[96m"
+_GREEN = "\033[92m"
+_RESET = "\033[0m"
+
 SESSION_CONFIG = {
     "turn_detection": {
         "type": "server_vad",
@@ -26,7 +30,7 @@ SESSION_CONFIG = {
     "voice": "coral",
     "instructions": SYSTEM_PROMPT,
     "modalities": ["text", "audio"],
-    "temperature": 0.7,
+    "temperature": 0.8,
 }
 
 
@@ -77,11 +81,13 @@ async def run(twilio_ws: WebSocket):
                             logger.error(f"OpenAI error: {data}")
 
                         elif event_type == "response.audio_transcript.done":
+                            assistant_text = data.get("transcript", "")
                             transcript.append({
                                 "role": "assistant",
-                                "text": data.get("transcript", ""),
+                                "text": assistant_text,
                                 "timestamp": datetime.now(timezone.utc).isoformat(),
                             })
+                            logger.info(f"{_GREEN}Assistant: {assistant_text}{_RESET}")
 
                         elif event_type == "conversation.item.input_audio_transcription.completed":
                             user_text = data.get("transcript", "")
@@ -90,6 +96,7 @@ async def run(twilio_ws: WebSocket):
                                 "text": user_text,
                                 "timestamp": datetime.now(timezone.utc).isoformat(),
                             })
+                            logger.info(f"{_CYAN}User: {user_text}{_RESET}")
 
                             # RAG gate: retrieve context or let LLM decide
                             context = await rag.retrieve(user_text)
@@ -102,10 +109,9 @@ async def run(twilio_ws: WebSocket):
                                 )
                             else:
                                 instructions = (
-                                    "If this is a greeting or small talk, respond warmly and naturally. "
-                                    "If it is a question — even one that seems Wise-related — it is outside "
-                                    "your knowledge base. Deflect: tell the caller you'll connect them to a "
-                                    "human agent who can help."
+                                    "If this is a greeting, respond warmly and naturally. "
+                                    "If it is a question — even one that seems Wise-related. "
+                                    "Deflect: tell the caller you'll connect them to a human agent who can help."
                                 )
 
                             await oai_ws.send(json.dumps({

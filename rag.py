@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 EMBEDDING_MODEL = "text-embedding-3-small"
 EMBEDDING_DIM = 1536
-SIMILARITY_THRESHOLD = 0.75
+SIMILARITY_THRESHOLD = 0.40
 
 _client = AsyncOpenAI(api_key=OPENAI_API_KEY)
 _index: faiss.IndexFlatIP | None = None
@@ -60,9 +60,10 @@ async def retrieve(query: str) -> str | None:
     scores, indices = _index.search(query_vec, k=3)
     top_score = float(scores[0][0])
 
-    logger.info(f"RAG top_score={top_score:.3f} | query={query[:60]!r}")
+    hit = top_score >= SIMILARITY_THRESHOLD
+    logger.info(f"RAG {'HIT' if hit else 'MISS'} top_score={top_score:.3f} | query={query!r}")
 
-    if top_score < SIMILARITY_THRESHOLD:
+    if not hit:
         return None
 
     relevant = [
