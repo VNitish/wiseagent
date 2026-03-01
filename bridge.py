@@ -83,6 +83,7 @@ async def run(twilio_ws: WebSocket):
             state["response_active"] = True
             await oai_ws.send(json.dumps({"type": "response.create"}))
             _audio_buffer: list[str] = []
+            _MAX_AUDIO_BUFFER = 200  # packets; guards against stream_sid never arriving
 
             async def _send_response(instructions: str | None = None) -> None:
                 """Send response.create only when no response is currently in-flight."""
@@ -287,7 +288,12 @@ async def run(twilio_ws: WebSocket):
                             })
                             logger.info(f"{_CYAN}User: {user_text}{_RESET}")
 
-                            context = await rag.retrieve(user_text)
+                            try:
+                                context = await rag.retrieve(user_text)
+                            except Exception as e:
+                                logger.error(f"RAG retrieve error: {e}", exc_info=True)
+                                context = None
+
                             if context:
                                 instructions = (
                                     f"CONTEXT:\n{context}\n\n"
@@ -337,7 +343,10 @@ async def run(twilio_ws: WebSocket):
                                     "media": {"payload": delta},
                                 })
                             else:
-                                _audio_buffer.append(delta)
+                                if len(_audio_buffer) < _MAX_AUDIO_BUFFER:
+                                    _audio_buffer.append(delta)
+                                else:
+                                    logger.warning("_audio_buffer full — dropping early delta (stream_sid not yet received)")
 
                 except WebSocketDisconnect:
                     pass  # caller hung up — normal exit

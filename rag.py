@@ -45,6 +45,10 @@ async def embed(text: str) -> list[float]:
     return response.data[0].embedding
 
 
+def index_size() -> int:
+    return _index.ntotal if _index is not None else 0
+
+
 async def retrieve(query: str) -> str | None:
     """
     Embed query and search FAISS index.

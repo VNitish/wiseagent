@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
@@ -12,6 +14,9 @@ async def ingest(request: Request):
     url = body.get("url", "").strip()
     if not url:
         return JSONResponse({"error": "URL required"}, status_code=400)
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https") or not parsed.netloc:
+        return JSONResponse({"error": "Invalid URL — must be http or https"}, status_code=400)
     return StreamingResponse(
         pipeline.ingest_stream(url),
         media_type="text/event-stream",
