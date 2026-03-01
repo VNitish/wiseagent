@@ -1,30 +1,41 @@
 # WiseAgent
 
-AI voice agent for Wise support — handles "Where is my money?" calls.
+Voice support agent for Wise — built on Twilio + OpenAI Realtime API.
 
 ## Architecture
 
 ```
-Caller → Twilio → /incoming-call → WS /media-stream → bridge.py
-                                                           ↕
-                                                  OpenAI Realtime API
-                                                  (gpt-4o-realtime)
-                                                           ↑
-                                                   rag.py (FAISS gate)
-                                                           ↑
-                                                    db/ (Supabase)
+Caller → Twilio PSTN → POST /incoming-call → TwiML <Stream>
+       → WS /media-stream → bridge.py → WSS OpenAI Realtime
+                                ↑
+                         rag.py (FAISS gate, per-turn)
+                                ↑
+                         db/ (Supabase — KB + transcripts)
 ```
 
-**RAG** — `pipeline.startup()` loads `knowledge_base`, rechunks stale entries (400 tokens, 20% overlap), embeds via `text-embedding-3-small`, builds FAISS `IndexFlatIP`. Per turn, the transcript is searched at threshold 0.75 and context injected into `response.create`. Below threshold, LLM decides (small talk or deflect).
+**Bridge** (`bridge.py`) — bidirectional WebSocket proxy. Inbound g711_ulaw audio forwarded raw to OpenAI; outbound audio forwarded raw to Twilio. No transcoding.
 
-**Ingestion** — `POST /ingest` fetches a Wise Help URL via OpenGraph.io, chunks, embeds, rebuilds index with SSE progress.
+**RAG gate** — on each user turn, transcript is embedded and searched against FAISS IndexFlatIP (cosine similarity, threshold 0.50). Hit → context injected into `response.create` instructions. Miss → mandatory escalation script.
 
-## Stack
-FastAPI · Twilio Media Streams · OpenAI Realtime · FAISS · Supabase pgvector
+**Ingestion** — `POST /ingest` fetches a URL via OpenGraph.io, extracts content, chunks at 400 tokens (80 overlap), embeds with `text-embedding-3-small`, stores in Supabase, rebuilds FAISS index. SHA256 dedup skips unchanged articles.
 
-## Run
+## Key Decisions
+
+- **Server VAD + `create_response: False`** — manual response trigger after RAG lookup, not auto-trigger on silence
+- **Twilio mark events** — accurate end-of-playback signal (vs `response.done` which fires when generation ends, not playback)
+- **`conversation.item.truncate`** — syncs model context to what the caller actually heard on barge-in
+- **FAISS in-process** — no vector DB latency; rebuilt on startup and after each ingest
+
+## Setup
+
+```
+OPENAI_API_KEY, TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN,
+TWILIO_PHONE_NUMBER, SUPABASE_URL, SUPABASE_KEY, OPENGRAPH_API_KEY
+```
+
 ```bash
 pip install -r requirements.txt
-ngrok http 5050
-python main.py
+uvicorn main:app --port 5050
 ```
+
+Deploy: Railway — `Procfile` and `runtime.txt` (Python 3.11) included.
