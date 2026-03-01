@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 EMBEDDING_MODEL = "text-embedding-3-small"
 EMBEDDING_DIM = 1536
-SIMILARITY_THRESHOLD = 0.35
+SIMILARITY_THRESHOLD = 0.50
 
 _client = AsyncOpenAI(api_key=OPENAI_API_KEY)
 _index: faiss.IndexFlatIP | None = None
