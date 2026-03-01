@@ -22,7 +22,8 @@ def _index_html() -> str:
 
 def _check_twilio_signature(request: Request, params: dict) -> None:
     sig = request.headers.get("X-Twilio-Signature", "")
-    url = str(request.url)
+    host = request.headers["host"]
+    url = f"https://{host}/incoming-call"
     if not _validator.validate(url, params, sig):
         raise HTTPException(status_code=403, detail="Invalid Twilio signature")
 
