@@ -273,6 +273,9 @@ async def run(twilio_ws: WebSocket):
                                 "timestamp": datetime.now(timezone.utc).isoformat(),
                             })
                             logger.info(f"{_GREEN}Assistant: {assistant_text}{_RESET}")
+                            if "human agent" in assistant_text.lower():
+                                logger.info("Escalation detected — will hang up after playback")
+                                state["should_hangup"] = True
 
                         # ── User turn — RAG gate ───────────────────────────────
                         elif event_type == "conversation.item.input_audio_transcription.completed":
