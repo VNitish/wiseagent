@@ -7,126 +7,235 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    :root {
+      --bg:          #080808;
+      --surface:     #111111;
+      --surface-2:   #181818;
+      --border:      #222222;
+      --border-hi:   #3a3a3a;
+      --text:        #e6e6e6;
+      --text-dim:    #888888;
+      --text-muted:  #444444;
+      --green:       #22c55e;
+      --red:         #ef4444;
+      --white:       #ffffff;
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #0d1117;
+      background: var(--bg);
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 24px;
+      padding: 48px 24px;
+      color: var(--text);
     }
 
     .layout {
-      display: flex;
-      gap: 20px;
+      display: grid;
+      grid-template-columns: 400px 1fr;
       width: 100%;
-      max-width: 860px;
-      align-items: flex-start;
+      max-width: 1080px;
+      border: 1px solid var(--border);
+      background: var(--border);
+      gap: 1px;
     }
 
-    /* ── Cards ── */
-    .card {
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 16px;
-      padding: 36px 32px;
+    .panel {
+      background: var(--surface);
+      padding: 48px 44px;
     }
 
-    .card-call { flex: 0 0 320px; }
-    .card-ingest { flex: 1; }
-
-    .card-header {
+    /* ── Header ── */
+    .panel-header {
       display: flex;
       align-items: center;
       gap: 10px;
       margin-bottom: 6px;
     }
 
-    .card-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
+    .panel-icon { color: var(--text-dim); display: flex; }
+
+    .panel-header h2 {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .panel-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 40px;
+      line-height: 1.6;
+    }
+
+    /* ── Number display ── */
+    .number-display {
+      font-size: 32px;
+      font-weight: 300;
+      letter-spacing: 0.06em;
+      color: var(--text);
+      min-height: 52px;
+      margin-bottom: 28px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      font-variant-numeric: tabular-nums;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .number-display.empty {
+      color: var(--text-muted);
+      font-size: 18px;
+      letter-spacing: 0.02em;
+      padding-top: 8px;
+    }
+
+    /* ── Dialpad ── */
+    .dialpad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      margin-bottom: 1px;
+    }
+
+    .dial-key {
+      background: var(--surface);
+      border: none;
+      color: var(--text);
+      font-family: inherit;
+      padding: 20px 12px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: background 0.08s;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .dial-key:hover  { background: var(--surface-2); }
+    .dial-key:active { background: var(--border); }
+
+    .dial-main {
+      font-size: 20px;
+      font-weight: 400;
+      line-height: 1;
+    }
+
+    .dial-sub {
+      font-size: 8.5px;
+      letter-spacing: 0.18em;
+      color: var(--text-muted);
+      min-height: 11px;
+    }
+
+    /* ── Call action row ── */
+    .dial-actions {
+      display: grid;
+      grid-template-columns: 1fr 56px;
+      gap: 1px;
+      background: var(--border);
+    }
+
+    .btn-call {
+      background: var(--green);
+      border: none;
+      color: #000;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: inherit;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 18px 20px;
+      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 18px;
-      flex-shrink: 0;
+      gap: 10px;
+      transition: background 0.1s;
     }
 
-    .icon-call { background: rgba(0, 185, 255, 0.12); }
-    .icon-ingest { background: rgba(35, 196, 124, 0.12); }
+    .btn-call:hover:not(:disabled) { background: #16a34a; }
+    .btn-call:disabled { opacity: 0.35; cursor: not-allowed; }
 
-    .card h2 {
-      font-size: 16px;
-      font-weight: 600;
-      color: #e6edf3;
-      letter-spacing: -0.01em;
-    }
-
-    .card-subtitle {
-      font-size: 13px;
-      color: #6e7681;
-      margin-bottom: 24px;
-      line-height: 1.5;
-    }
-
-    /* ── Inputs ── */
-    input, textarea {
-      width: 100%;
-      padding: 11px 14px;
-      font-size: 14px;
-      font-family: inherit;
-      background: #0d1117;
-      border: 1px solid #30363d;
-      border-radius: 8px;
-      color: #e6edf3;
-      outline: none;
-      transition: border-color 0.15s;
-      margin-bottom: 12px;
-    }
-
-    input::placeholder, textarea::placeholder { color: #484f58; }
-    input:focus, textarea:focus { border-color: #388bfd; }
-
-    /* ── Buttons ── */
-    .btn {
-      width: 100%;
-      padding: 11px 16px;
-      font-size: 14px;
-      font-weight: 600;
+    .btn-del {
+      background: var(--surface);
       border: none;
-      border-radius: 8px;
+      color: var(--text-dim);
       cursor: pointer;
-      transition: opacity 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.08s;
+    }
+
+    .btn-del:hover { background: var(--surface-2); }
+    .btn-del:active { background: var(--border); }
+
+    #call-status {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: center;
+      padding-top: 16px;
+      min-height: 36px;
       letter-spacing: 0.01em;
     }
 
-    .btn:active { transform: scale(0.98); }
-    .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
-
-    .btn-call { background: #1f6feb; color: #fff; }
-    .btn-call:hover:not(:disabled) { background: #388bfd; }
-
-    .btn-ingest { background: #238636; color: #fff; }
-    .btn-ingest:hover:not(:disabled) { background: #2ea043; }
-
-    /* ── Status (call) ── */
-    #call-status {
-      margin-top: 14px;
-      font-size: 13px;
-      color: #8b949e;
-      min-height: 18px;
-      text-align: center;
+    /* ── URL input ── */
+    input[type="url"] {
+      width: 100%;
+      padding: 13px 16px;
+      font-size: 14px;
+      font-family: inherit;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+      margin-bottom: 12px;
+      -webkit-appearance: none;
+      border-radius: 0;
     }
 
-    /* ── Progress bar ── */
+    input[type="url"]::placeholder { color: var(--text-muted); }
+    input[type="url"]:focus { border-color: var(--border-hi); }
+
+    /* ── Ingest button ── */
+    .btn-ingest {
+      width: 100%;
+      padding: 14px 20px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-family: inherit;
+      background: var(--white);
+      color: #000;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .btn-ingest:hover:not(:disabled) { opacity: 0.88; }
+    .btn-ingest:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* ── Progress ── */
     .progress-wrap {
-      height: 4px;
-      background: #21262d;
-      border-radius: 2px;
-      margin-bottom: 16px;
-      overflow: hidden;
+      height: 1px;
+      background: var(--border);
+      margin-bottom: 24px;
       display: none;
     }
 
@@ -135,119 +244,207 @@
     .progress-bar {
       height: 100%;
       width: 0%;
-      background: #238636;
-      border-radius: 2px;
-      transition: width 0.3s ease;
+      background: var(--green);
+      transition: width 0.35s ease;
     }
 
-    .progress-bar.error { background: #da3633; }
+    .progress-bar.error { background: var(--red); }
 
     /* ── Log feed ── */
+    .log-label {
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+
     .log-feed {
-      max-height: 240px;
+      max-height: 340px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 6px;
     }
 
-    .log-feed::-webkit-scrollbar { width: 4px; }
-    .log-feed::-webkit-scrollbar-track { background: transparent; }
-    .log-feed::-webkit-scrollbar-thumb { background: #30363d; border-radius: 2px; }
+    .log-feed::-webkit-scrollbar { width: 2px; }
+    .log-feed::-webkit-scrollbar-thumb { background: var(--border); }
 
     .log-entry {
       display: flex;
-      align-items: flex-start;
+      align-items: baseline;
       gap: 10px;
-      font-size: 13px;
-      color: #8b949e;
-      line-height: 1.5;
-      animation: fadeIn 0.2s ease;
+      font-size: 12.5px;
+      color: var(--text-muted);
+      line-height: 1.55;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
     }
 
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-
-    .log-entry.success { color: #3fb950; }
-    .log-entry.error-entry { color: #f85149; }
+    .log-entry:last-child { border-bottom: none; }
+    .log-entry.active    { color: var(--text); }
+    .log-entry.success   { color: var(--text-dim); }
+    .log-entry.error-entry { color: var(--red); }
 
     .log-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #30363d;
-      margin-top: 5px;
+      width: 4px;
+      height: 4px;
       flex-shrink: 0;
+      margin-top: 6px;
+      background: var(--border-hi);
     }
 
-    .log-entry.success .log-dot { background: #3fb950; }
-    .log-entry.error-entry .log-dot { background: #f85149; }
-    .log-entry.active .log-dot {
-      background: #388bfd;
-      box-shadow: 0 0 0 3px rgba(56, 139, 253, 0.2);
-    }
-
-    .divider {
-      width: 1px;
-      background: #21262d;
-      align-self: stretch;
-      flex-shrink: 0;
-      margin: 0 2px;
-    }
+    .log-entry.active    .log-dot { background: var(--white); }
+    .log-entry.success   .log-dot { background: var(--green); }
+    .log-entry.error-entry .log-dot { background: var(--red); }
   </style>
 </head>
 <body>
   <div class="layout">
 
     <!-- ── Call Panel ── -->
-    <div class="card card-call">
-      <div class="card-header">
-        <div class="card-icon icon-call">🦉</div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter">
+            <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 11.5 19.79 19.79 0 012 2.84 2 2 0 014 .82h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+          </svg>
+        </div>
         <h2>WiseAgent</h2>
       </div>
-      <p class="card-subtitle">Enter your number and Aria will call you.</p>
+      <p class="panel-sub">Enter a number — the agent will call you.</p>
 
-      <input id="phone" type="tel" placeholder="+91XXXXXXXXXX" />
-      <button class="btn btn-call" id="call-btn" onclick="makeCall()">Call Me</button>
+      <div id="number-display" class="number-display empty">+_ _ _ _ _ _ _ _ _ _</div>
+
+      <div class="dialpad">
+        <button class="dial-key" onclick="dialPress('1')"><span class="dial-main">1</span><span class="dial-sub"></span></button>
+        <button class="dial-key" onclick="dialPress('2')"><span class="dial-main">2</span><span class="dial-sub">ABC</span></button>
+        <button class="dial-key" onclick="dialPress('3')"><span class="dial-main">3</span><span class="dial-sub">DEF</span></button>
+        <button class="dial-key" onclick="dialPress('4')"><span class="dial-main">4</span><span class="dial-sub">GHI</span></button>
+        <button class="dial-key" onclick="dialPress('5')"><span class="dial-main">5</span><span class="dial-sub">JKL</span></button>
+        <button class="dial-key" onclick="dialPress('6')"><span class="dial-main">6</span><span class="dial-sub">MNO</span></button>
+        <button class="dial-key" onclick="dialPress('7')"><span class="dial-main">7</span><span class="dial-sub">PQRS</span></button>
+        <button class="dial-key" onclick="dialPress('8')"><span class="dial-main">8</span><span class="dial-sub">TUV</span></button>
+        <button class="dial-key" onclick="dialPress('9')"><span class="dial-main">9</span><span class="dial-sub">WXYZ</span></button>
+        <button class="dial-key" onclick="dialPress('*')"><span class="dial-main">*</span><span class="dial-sub"></span></button>
+        <button class="dial-key" id="key-0" onclick="dialPress('0')"><span class="dial-main">0</span><span class="dial-sub">+</span></button>
+        <button class="dial-key" onclick="dialPress('#')"><span class="dial-main">#</span><span class="dial-sub"></span></button>
+      </div>
+
+      <div class="dial-actions">
+        <button class="btn-call" id="call-btn" onclick="makeCall()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 11.5 19.79 19.79 0 012 2.84 2 2 0 014 .82h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+          </svg>
+          Call
+        </button>
+        <button class="btn-del" onclick="dialDelete()" title="Delete">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" stroke-linejoin="miter">
+            <polyline points="21 4 8 4 1 12 8 20 21 20 21 4"/>
+            <line x1="18" y1="9" x2="13" y2="14"/>
+            <line x1="13" y1="9" x2="18" y2="14"/>
+          </svg>
+        </button>
+      </div>
+
       <div id="call-status"></div>
     </div>
 
-    <div class="divider"></div>
-
-    <!-- ── Ingestion Panel ── -->
-    <div class="card card-ingest">
-      <div class="card-header">
-        <div class="card-icon icon-ingest">📚</div>
+    <!-- ── Knowledge Base Panel ── -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter">
+            <ellipse cx="12" cy="5" rx="9" ry="3"/>
+            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+          </svg>
+        </div>
         <h2>Knowledge Base</h2>
       </div>
-      <p class="card-subtitle">Paste a Wise Help article URL to ingest it into Aria's knowledge.</p>
+      <p class="panel-sub">Paste a Wise Help article URL to index it into the agent's knowledge.</p>
 
       <input
         id="ingest-url"
         type="url"
         placeholder="https://wise.com/help/articles/..."
       />
-      <button class="btn btn-ingest" id="ingest-btn" onclick="startIngestion()">Start Ingestion</button>
+      <button class="btn-ingest" id="ingest-btn" onclick="startIngestion()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="square" stroke-linejoin="miter">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <polyline points="19 12 12 19 5 12"/>
+        </svg>
+        Start Ingestion
+      </button>
 
       <div class="progress-wrap" id="progress-wrap">
         <div class="progress-bar" id="progress-bar"></div>
       </div>
 
+      <div class="log-label">Activity</div>
       <div class="log-feed" id="log-feed"></div>
     </div>
 
   </div>
 
   <script>
+    // ── Dialpad ────────────────────────────────────────────────────────────────
+    let dialNumber = "";
+
+    function updateDisplay() {
+      const el = document.getElementById("number-display");
+      if (dialNumber) {
+        el.textContent = dialNumber;
+        el.classList.remove("empty");
+      } else {
+        el.textContent = "+_ _ _ _ _ _ _ _ _ _";
+        el.classList.add("empty");
+      }
+    }
+
+    function dialPress(key) {
+      if (dialNumber.length >= 16) return;
+      if (dialNumber === "") dialNumber = "+";
+      dialNumber += key;
+      updateDisplay();
+    }
+
+    function dialDelete() {
+      if (!dialNumber) return;
+      dialNumber = dialNumber.slice(0, -1);
+      updateDisplay();
+    }
+
+    // Long-press 0 → insert + prefix
+    let holdTimer = null;
+    const key0 = document.getElementById("key-0");
+    key0.addEventListener("mousedown", () => {
+      holdTimer = setTimeout(() => {
+        if (!dialNumber) { dialNumber = "+"; updateDisplay(); }
+        holdTimer = null;
+      }, 600);
+    });
+    key0.addEventListener("mouseup",    () => clearTimeout(holdTimer));
+    key0.addEventListener("mouseleave", () => clearTimeout(holdTimer));
+
+    // Keyboard input
+    document.addEventListener("keydown", e => {
+      if (document.activeElement.tagName === "INPUT") return;
+      if (/^[0-9*#]$/.test(e.key)) dialPress(e.key);
+      else if (e.key === "Backspace") dialDelete();
+      else if (e.key === "Enter") makeCall();
+      else if (e.key === "+") { if (!dialNumber) { dialNumber = "+"; updateDisplay(); } }
+    });
+
     // ── Call ───────────────────────────────────────────────────────────────────
     async function makeCall() {
-      const phone = document.getElementById("phone").value.trim();
+      const phone = dialNumber.trim();
       const status = document.getElementById("call-status");
       const btn = document.getElementById("call-btn");
 
-      if (!phone) { status.innerText = "Enter a phone number first."; return; }
+      if (!phone || phone === "+") { status.textContent = "Enter a phone number."; return; }
 
       btn.disabled = true;
-      status.innerText = "Initiating call…";
+      status.textContent = "Initiating call...";
 
       try {
         const res = await fetch("/call", {
@@ -256,9 +453,9 @@
           body: JSON.stringify({ to: phone }),
         });
         const data = await res.json();
-        status.innerText = data.message || data.error;
+        status.textContent = data.message || data.error;
       } catch {
-        status.innerText = "Something went wrong. Try again.";
+        status.textContent = "Connection failed.";
       } finally {
         btn.disabled = false;
       }
@@ -320,7 +517,6 @@
     function addLog(message, progress, isError) {
       const feed = document.getElementById("log-feed");
 
-      // Mark previous active entry as done
       const prev = feed.querySelector(".log-entry.active");
       if (prev) {
         prev.classList.remove("active");
