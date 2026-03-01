@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 EMBEDDING_MODEL = "text-embedding-3-small"
 EMBEDDING_DIM = 1536
-SIMILARITY_THRESHOLD = 0.40
+SIMILARITY_THRESHOLD = 0.35
 
 _client = AsyncOpenAI(api_key=OPENAI_API_KEY)
 _index: faiss.IndexFlatIP | None = None
@@ -66,9 +66,11 @@ async def retrieve(query: str) -> str | None:
     if not hit:
         return None
 
-    relevant = [
-        _chunk_texts[int(idx)]
-        for score, idx in zip(scores[0], indices[0])
-        if float(score) >= SIMILARITY_THRESHOLD and int(idx) >= 0
-    ]
+    relevant = []
+    for score, idx in zip(scores[0], indices[0]):
+        if float(score) >= SIMILARITY_THRESHOLD and int(idx) >= 0:
+            chunk = _chunk_texts[int(idx)]
+            logger.info(f"\033[95mMatched chunk (score={float(score):.3f}):\n{chunk}\033[0m")
+            relevant.append(chunk)
+
     return "\n\n".join(relevant)

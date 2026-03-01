@@ -37,7 +37,7 @@ async def startup():
         if current_hash != entry.get("content_hash"):
             logger.info(f"Re-chunking: {entry['title']!r}")
             await delete_chunks_for_kb(kb_id)
-            await save_chunks(kb_id, chunker.chunk_text(content))
+            await save_chunks(kb_id, chunker.chunk_text(content, entry["title"]))
             await update_content_hash(kb_id, current_hash)
 
     unembedded = await get_unembedded_chunks()
@@ -93,7 +93,7 @@ async def ingest_stream(url: str):
 
         yield event("Chunking content...", 50)
         await delete_chunks_for_kb(kb_id)
-        chunks = chunker.chunk_text(content)
+        chunks = chunker.chunk_text(content, title)
         saved_chunks = await save_chunks(kb_id, chunks)
         await update_content_hash(kb_id, current_hash)
         yield event(f"Created {len(chunks)} chunks.", 60)

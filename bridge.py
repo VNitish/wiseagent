@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 
 import websockets
 from fastapi import WebSocket
+from starlette.websockets import WebSocketDisconnect
 
 from config import OPENAI_API_KEY, OPENAI_REALTIME_URL
 from prompt import SYSTEM_PROMPT
@@ -102,16 +103,18 @@ async def run(twilio_ws: WebSocket):
                             context = await rag.retrieve(user_text)
                             if context:
                                 instructions = (
-                                    f"Answer the caller using ONLY the following context:\n\n"
-                                    f"{context}\n\n"
-                                    f"If the context doesn't fully answer their question, say it's outside "
-                                    f"what you can help with and offer to connect them to a human agent."
+                                    f"CONTEXT:\n{context}\n\n"
+                                    f"INSTRUCTIONS: Answer using ONLY the context above. "
+                                    f"DO NOT add any information from your training data. "
+                                    f"If the context does not directly answer the caller's question, "
+                                    f"escalate to a human agent — do not attempt a partial answer."
                                 )
                             else:
                                 instructions = (
-                                    "If this is a greeting, respond warmly and naturally. "
-                                    "If it is a question — even one that seems Wise-related. "
-                                    "Deflect: tell the caller you'll connect them to a human agent who can help."
+                                    "NO context is available for this turn. "
+                                    "DO NOT answer using your training data or general knowledge under any circumstances. "
+                                    "If this is a greeting or small talk, respond briefly and naturally. "
+                                    "If this is any kind of question, escalate to a human agent immediately — do not attempt to answer."
                                 )
 
                             await oai_ws.send(json.dumps({
@@ -126,6 +129,8 @@ async def run(twilio_ws: WebSocket):
                                 "media": {"payload": data["delta"]},
                             })
 
+                except WebSocketDisconnect:
+                    pass  # caller hung up — normal exit
                 except Exception as e:
                     logger.error(f"openai_to_twilio error: {e}", exc_info=True)
 
