@@ -67,6 +67,7 @@ async def run(twilio_ws: WebSocket):
         "response_start_timestamp_twilio": None,  # Twilio ms when this response's audio began
         "latest_media_timestamp": 0,              # latest inbound Twilio media timestamp
         "mark_counter": 0,                        # unique mark IDs sent to Twilio
+        "should_hangup": False,        # True after escalation — hang up once playback ends
     }
 
     try:
@@ -126,6 +127,11 @@ async def run(twilio_ws: WebSocket):
                             if mark_name.startswith("resp_"):
                                 state["playback_active"] = False
                                 logger.info("Twilio playback complete")
+                                if state["should_hangup"]:
+                                    logger.info("Hanging up call after escalation — closing in 2s")
+                                    await asyncio.sleep(3)
+                                    await twilio_ws.close()
+                                    return
 
                         elif event == "stop":
                             break
