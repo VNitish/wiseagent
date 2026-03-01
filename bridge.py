@@ -40,9 +40,10 @@ SESSION_CONFIG = {
 }
 
 _FILLER_INSTRUCTION = (
-    "The caller just interrupted you mid-response. "
-    "Say ONE short natural acknowledgement — e.g. 'Sure.', 'Of course.', 'Go ahead.', or 'Yes?' "
-    "— under 3 words. Do not continue your previous response."
+    "BARGE-IN: the caller interrupted you. "
+    "Say EXACTLY one of these — pick one, say nothing else: "
+    "'Sure.', 'Of course.', 'Go ahead.', 'Yes?', 'Okay.' "
+    "Do NOT continue your previous response. Do NOT add any other words."
 )
 
 
@@ -83,7 +84,6 @@ async def run(twilio_ws: WebSocket):
             state["response_active"] = True
             await oai_ws.send(json.dumps({"type": "response.create"}))
             _audio_buffer: list[str] = []
-            _MAX_AUDIO_BUFFER = 200  # packets; guards against stream_sid never arriving
 
             async def _send_response(instructions: str | None = None) -> None:
                 """Send response.create only when no response is currently in-flight."""
@@ -343,10 +343,7 @@ async def run(twilio_ws: WebSocket):
                                     "media": {"payload": delta},
                                 })
                             else:
-                                if len(_audio_buffer) < _MAX_AUDIO_BUFFER:
-                                    _audio_buffer.append(delta)
-                                else:
-                                    logger.warning("_audio_buffer full — dropping early delta (stream_sid not yet received)")
+                                _audio_buffer.append(delta)
 
                 except WebSocketDisconnect:
                     pass  # caller hung up — normal exit
