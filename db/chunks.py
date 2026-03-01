@@ -1,3 +1,5 @@
+import json
+
 from .client import _client, _q, _run
 
 
@@ -17,12 +19,16 @@ async def get_unembedded_chunks() -> list[dict]:
 
 
 async def get_chunks_with_embeddings() -> list[dict]:
-    return await _q(
+    rows = await _q(
         lambda: _client.table("chunks")
         .select("id, content, embedding")
         .not_.is_("embedding", "null")
         .execute()
     )
+    for row in rows:
+        if isinstance(row["embedding"], str):
+            row["embedding"] = json.loads(row["embedding"])
+    return rows
 
 
 async def save_chunks(kb_id: str, chunks: list[dict]) -> list[dict]:
