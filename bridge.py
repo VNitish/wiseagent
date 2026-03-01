@@ -90,7 +90,6 @@ async def run(twilio_ws: WebSocket):
                         "Say exactly this greeting, nothing more: "
                         "'Hi, you've reached Wise support — how can I help you today?'"
                     ),
-                    "max_output_tokens": 30,
                 },
             }))
             _audio_buffer: list[str] = []
